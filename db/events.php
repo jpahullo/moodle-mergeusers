@@ -27,11 +27,10 @@
  *
  * Available events: merging_sucess, merging_failed
  */
-$observers = array(
-    array(
+$observers = [
+    [
         'eventname'     => 'tool_mergeusers\event\user_merged_success',
-        'callback'      => 'tool_mergeusers_old_user_suspend',
-        'includefile'   => '/admin/tool/mergeusers/lib/events/olduser.php',
-        'internal'      => 1
-    )
-);
+        'callback'      => 'tool_mergeusers\event\handler\olduser::suspend',
+        'internal'      => true,
+    ],
+];

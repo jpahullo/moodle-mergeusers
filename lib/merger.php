@@ -26,17 +26,13 @@ require_once __DIR__ . '/autoload.php';
 
 class Merger {
     /**
-     * @var MergeUserTool instance of the tool.
+     * @var tool_mergeusers\mergeusertool instance of the tool.
      */
     protected $mut;
 
-    /**
-     * Initializes the MergeUserTool to process any incoming merging action through
-     * any Gathering instance.
-     */
-    public function __construct(MergeUserTool $mut) {
+    public function __construct(mergeusertool $mut) {
         $this->mut = $mut;
-        $this->logger = new tool_mergeusers_logger();
+        $this->logger = new logger();
 
         // to catch Ctrl+C interruptions, we need this stuff.
         declare(ticks = 1);

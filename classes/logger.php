@@ -14,6 +14,7 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+
 /**
  * @package tool
  * @subpackage mergeusers
@@ -21,6 +22,9 @@
  * @copyright 2013 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
+namespace tool_mergeusers;
+defined('MOODLE_INTERNAL') || die();
 
 require_once __DIR__ . '/../../../../config.php';
 
@@ -32,25 +36,23 @@ require_once $CFG->dirroot .'/lib/clilib.php';
  * Class to manage logging actions for this tool.
  * General log table cannot be used for log.info field length restrictions.
  */
-class tool_mergeusers_logger {
+class logger {
 
     /**
      * Adds a merging action log into tool log.
-     * @param int $touserid user.id where all data from $fromuserid will be merged into.
-     * @param int $fromuserid user.id moving all data into $touserid.
-     * @param bool $success true if merging action was ok; false otherwise.
-     * @param array $log list of actions performed for a successful merging;
-     * or a problem description if merging failed.
+     * @param \stdClass $touser user where all data from $fromuser will be merged into.
+     * @param \stdClass $fromuser user moving all data into $touser.
+     * @param mergeresult $mergeresult result of the merge.
      */
-    public function log($touserid, $fromuserid, $success, $log) {
+    public function log($touser, $fromuser, $mergeresult) {
         global $DB;
 
-        $record = new stdClass();
-        $record->touserid = $touserid;
-        $record->fromuserid = $fromuserid;
+        $record = new \stdClass();
+        $record->touserid = $touser->id;
+        $record->fromuserid = $fromuser->id;
         $record->timemodified = time();
-        $record->success = (int)$success;
-        $record->log = json_encode($log); //to get it
+        $record->success = (int)$mergeresult->success;
+        $record->log = json_encode($mergeresult->log);
 
         try {
             return $DB->insert_record('tool_mergeusers', $record, true); //exception is thrown on any error

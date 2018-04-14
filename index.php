@@ -30,6 +30,8 @@
  */
 require('../../../config.php');
 
+use tool_mergeusers\mergeusertool;
+
 global $CFG;
 global $PAGE;
 global $SESSION;
@@ -68,7 +70,7 @@ $renderer = $PAGE->get_renderer('tool_mergeusers');
 $data = $mergeuserform->get_data();
 
 //may abort execution if database not supported, for security
-$mut = new MergeUserTool();
+$mut = new mergeusertool();
 // Search tool for searching for users and verifying them
 $mus = new MergeUserSearch();
 
@@ -132,13 +134,13 @@ if (!empty($option)) {
             // Merge the users
             $log = array();
             $success = true;
-            list($success, $log, $logid) = $mut->merge($touser->id, $fromuser->id);
+            $mergeresult = $mut->merge($touser, $fromuser);
 
             // reset mut session
             $SESSION->mut = NULL;
 
             // render results page
-            echo $renderer->results_page($touser, $fromuser, $success, $log, $logid);
+            echo $renderer->results_page($touser, $fromuser, $mergeresult);
             break;
 
         // we have both users to merge selected, but we want to change any of them.

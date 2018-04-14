@@ -30,6 +30,9 @@
 
 defined('MOODLE_INTERNAL') || die;
 
+use tool_mergeusers\config;
+use tool_mergeusers\table\quizattemptsmerger;
+
 if (has_capability('tool/mergeusers:mergeusers', context_system::instance())) {
     require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib/autoload.php');
     require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
@@ -67,7 +70,7 @@ if ($hassiteconfig) {
             get_string($supporting_lang, 'tool_mergeusers'),
         1));
 
-    $config = tool_mergeusers_config::instance();
+    $config = config::instance();
     $none = get_string('none');
     $options = array('none' => $none);
     foreach ($config->exceptions as $exception) {
@@ -82,22 +85,22 @@ if ($hassiteconfig) {
 
     // quiz attempts
     $quizStrings = new stdClass();
-    $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
-    $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN} = get_string('qa_action_' . QuizAttemptsMerger::ACTION_REMAIN, 'tool_mergeusers');
+    $quizStrings->{quizattemptsmerger::ACTION_RENUMBER} = get_string('qa_action_' . quizattemptsmerger::ACTION_RENUMBER, 'tool_mergeusers');
+    $quizStrings->{quizattemptsmerger::ACTION_DELETE_FROM_SOURCE} = get_string('qa_action_' . quizattemptsmerger::ACTION_DELETE_FROM_SOURCE, 'tool_mergeusers');
+    $quizStrings->{quizattemptsmerger::ACTION_DELETE_FROM_TARGET} = get_string('qa_action_' . quizattemptsmerger::ACTION_DELETE_FROM_TARGET, 'tool_mergeusers');
+    $quizStrings->{quizattemptsmerger::ACTION_REMAIN} = get_string('qa_action_' . quizattemptsmerger::ACTION_REMAIN, 'tool_mergeusers');
 
     $quizOptions = array(
-    QuizAttemptsMerger::ACTION_RENUMBER => $quizStrings->{QuizAttemptsMerger::ACTION_RENUMBER},
-        QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_SOURCE},
-        QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET => $quizStrings->{QuizAttemptsMerger::ACTION_DELETE_FROM_TARGET},
-        QuizAttemptsMerger::ACTION_REMAIN => $quizStrings->{QuizAttemptsMerger::ACTION_REMAIN},
+    quizattemptsmerger::ACTION_RENUMBER => $quizStrings->{quizattemptsmerger::ACTION_RENUMBER},
+        quizattemptsmerger::ACTION_DELETE_FROM_SOURCE => $quizStrings->{quizattemptsmerger::ACTION_DELETE_FROM_SOURCE},
+        quizattemptsmerger::ACTION_DELETE_FROM_TARGET => $quizStrings->{quizattemptsmerger::ACTION_DELETE_FROM_TARGET},
+        quizattemptsmerger::ACTION_REMAIN => $quizStrings->{quizattemptsmerger::ACTION_REMAIN},
     );
 
     $settings->add(new admin_setting_configselect('tool_mergeusers/quizattemptsaction',
         get_string('quizattemptsaction', 'tool_mergeusers'),
         get_string('quizattemptsaction_desc', 'tool_mergeusers', $quizStrings),
-        QuizAttemptsMerger::ACTION_REMAIN,
+        quizattemptsmerger::ACTION_REMAIN,
         $quizOptions)
     );
 

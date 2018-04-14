@@ -15,33 +15,35 @@
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
 /**
- * View merging logs.
+ * The result of a merge action.
  *
- * @package    tool
+ * @package tool
  * @subpackage mergeusers
- * @author     Jordi Pujol-Ahulló, Sred, Universitat Rovira i Virgili
+ * @author Jordi Pujol Ahulló <jordi.pujol@urv.cat>
+ * @copyright 2018 Servei de Recursos Educatius (http://www.sre.urv.cat)
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
-require('../../../config.php');
+namespace tool_mergeusers;
+defined('MOODLE_INTERNAL') || die();
 
-use tool_mergeusers\logger;
 
-global $CFG, $PAGE;
+class mergeresult
+{
+    public $success;
+    public $log;
+    public $logid;
 
-// Report all PHP errors
-error_reporting(E_ALL);
-ini_set('display_errors', 'On');
+    private function __construct($success, $log, $logid)
+    {
+        $this->success = $success;
+        $this->log = $log;
+        $this->logid = $logid;
+    }
 
-require_once($CFG->dirroot . '/lib/adminlib.php');
-require_once('lib/autoload.php');
+    public static function from($success, $log, $logid = null)
+    {
+        return new static($success, $log, logid);
+    }
 
-require_login();
-require_capability('tool/mergeusers:mergeusers', context_system::instance());
-
-admin_externalpage_setup('tool_mergeusers_viewlog');
-
-$logger = new logger();
-$renderer = $PAGE->get_renderer('tool_mergeusers');
-
-echo $renderer->logs_page($logger->get());
+}

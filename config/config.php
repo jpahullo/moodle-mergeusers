@@ -131,9 +131,9 @@ return array(
     // TableMergers to process each database table.
     // 'default' is applied when no specific TableMerger is specified.
     'tablemergers' => array(
-        'default' => 'GenericTableMerger',
-        'user_enrolments' => 'UserEnrolmentsMerger',
-        'quiz_attempts' => 'QuizAttemptsMerger',
+        'default' => 'tool_mergeusers\table\generictablemerger',
+        'user_enrolments' => 'tool_mergeusers\table\userenrolmentsmerger',
+        'quiz_attempts' => 'tool_mergeusers\table\quizattemptsmerger',
     ),
 
     'alwaysRollback' => false,

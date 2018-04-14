@@ -14,6 +14,8 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use tool_mergeusers\mergeusertool;
+
 /**
  * Version information
  *
@@ -27,8 +29,6 @@ class tool_mergeusers_enrolments_testcase extends advanced_testcase {
      * Setup the test.
      */
     public function setUp() {
-        global $CFG;
-        require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
         $this->resetAfterTest(true);
     }
 
@@ -76,8 +76,8 @@ class tool_mergeusers_enrolments_testcase extends advanced_testcase {
         $this->assertCount(2, $courses);
         $this->assertEquals(array($course2->id, $course3->id), array_keys($courses));
 
-        $mut = new MergeUserTool();
-        list($success, $log, $logid) = $mut->merge($user_keep->id, $user_remove->id);
+        $mut = new mergeusertool();
+        $mut->merge($user_keep, $user_remove);
 
         // Check $user_remove is suspended.
         $user_remove = $DB->get_record('user', array('id' => $user_remove->id));

@@ -25,6 +25,9 @@
 
 require('../../../config.php');
 
+use tool_mergeusers\logger;
+use tool_mergeusers\mergeresult;
+
 global $CFG, $DB, $PAGE;
 
 // Report all PHP errors
@@ -40,7 +43,7 @@ admin_externalpage_setup('tool_mergeusers_viewlog');
 $id = required_param('id', PARAM_INT);
 
 $renderer = $PAGE->get_renderer('tool_mergeusers');
-$logger = new tool_mergeusers_logger();
+$logger = new logger();
 
 $log = $logger->getDetail($id);
 
@@ -61,5 +64,6 @@ if (!$to) {
     $to->id = $log->touserid;
     $to->username = get_string('deleted');
 }
+$mergeresult = mergeresult::from($log->success, $log->log, $log->id);
 
-echo $renderer->results_page($to, $from, $log->success, $log->log, $log->id);
+echo $renderer->results_page($to, $from, $mergeresult);

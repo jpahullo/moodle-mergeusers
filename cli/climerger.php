@@ -63,13 +63,13 @@ Options:
 }
 
 // loads current configuration
-$config = tool_mergeusers_config::instance();
+$config = config::instance();
 
 $config->debugdb = !empty($options['debugdb']);
 $config->alwaysRollback = !empty($options['alwaysRollback']);
 
 // initializes merger tool
-$mut = new MergeUserTool($config); //may abort execution if database is not supported
+$mut = new mergeusertool($config); //may abort execution if database is not supported
 $merger = new Merger($mut);
 
 // initializes gathering instance

@@ -22,6 +22,9 @@
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
 
+namespace tool_mergeusers;
+defined('MOODLE_INTERNAL') || die();
+
 /**
  * Wrapper class for the configuration settings of the merge user utility.
  *
@@ -51,9 +54,9 @@
  * If the key 'both' appears, means that both columns are user-related and must be searched for
  * both. See the README.txt for more details on special cases.
  */
-class tool_mergeusers_config {
+class config {
     /**
-     * @var tool_mergeusers_config singleton instance.
+     * @var config singleton instance.
      */
     private static $instance = null;
 
@@ -77,11 +80,11 @@ class tool_mergeusers_config {
 
     /**
      * Singleton method.
-     * @return tool_mergeusers_config singleton instance.
+     * @return config singleton instance.
      */
     public static function instance() {
         if (is_null(self::$instance) || defined('PHPUNIT_TEST') || defined('BEHAT_SITE_RUNNING')) {
-            self::$instance = new tool_mergeusers_config();
+            self::$instance = new config();
         }
         return self::$instance;
     }

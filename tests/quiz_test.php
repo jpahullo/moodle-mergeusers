@@ -14,6 +14,9 @@
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
 
+use tool_mergeusers\mergeusertool;
+use tool_mergeusers\table\quizattemptsmerger;
+
 /**
  * Version information
  *
@@ -30,8 +33,7 @@ class tool_mergeusers_quiz_testcase extends advanced_testcase {
      * Enrol the users onto the courses.
      */
     public function setUp() {
-        global $CFG, $DB;
-        require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
+        global $DB;
         $this->resetAfterTest(true);
 
         // Setup two users to merge.
@@ -175,10 +177,10 @@ class tool_mergeusers_quiz_testcase extends advanced_testcase {
         $this->assertEquals('50.00', $this->get_user_quiz_grade($this->user_keep, $this->quiz1, $this->course1));
         $this->assertEquals('100.00', $this->get_user_quiz_grade($this->user_remove, $this->quiz1, $this->course1));
 
-        set_config('quizattemptsaction', QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
+        set_config('quizattemptsaction', quizattemptsmerger::ACTION_RENUMBER, 'tool_mergeusers');
 
-        $mut = new MergeUserTool();
-        $mut->merge($this->user_keep->id, $this->user_remove->id);
+        $mut = new mergeusertool();
+        $mut->merge($this->user_keep, $this->user_remove);
 
         // User to remove should now have 100%.
         $this->assertEquals('100.00', $this->get_user_quiz_grade($this->user_keep, $this->quiz1, $this->course1));
@@ -203,10 +205,10 @@ class tool_mergeusers_quiz_testcase extends advanced_testcase {
         $this->assertEquals('-', $this->get_user_quiz_grade($this->user_remove, $this->quiz1, $this->course1));
         $this->assertEquals('100.00', $this->get_user_quiz_grade($this->user_remove, $this->quiz2, $this->course2));
 
-        set_config('quizattemptsaction', QuizAttemptsMerger::ACTION_RENUMBER, 'tool_mergeusers');
+        set_config('quizattemptsaction', quizattemptsmerger::ACTION_RENUMBER, 'tool_mergeusers');
 
-        $mut = new MergeUserTool();
-        $mut->merge($this->user_keep->id, $this->user_remove->id);
+        $mut = new mergeusertool();
+        $mut->merge($this->user_keep, $this->user_remove);
 
         $this->assertEquals('50.00', $this->get_user_quiz_grade($this->user_keep, $this->quiz1, $this->course1));
         $this->assertEquals('100.00', $this->get_user_quiz_grade($this->user_keep, $this->quiz2, $this->course2));

@@ -14,6 +14,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+namespace tool_mergeusers;
 
 /**
  * Utility file.
@@ -30,30 +31,34 @@
  * @author     John Hoopes <hoopes@wisc.edu>, University of Wisconsin - Madison
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
+
 defined('MOODLE_INTERNAL') || die();
+
 
 require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
 
 global $CFG;
 
 require_once $CFG->dirroot . '/lib/clilib.php';
-require_once __DIR__ . '/autoload.php';
+require_once __DIR__ . '/../lib/autoload.php';
 require_once($CFG->dirroot . '/'.$CFG->admin.'/tool/mergeusers/lib.php');
+
+use tool_mergeusers\table\tablemerger;
+use Exception;
 
 /**
  *
  *
  * Lifecycle:
- * <ol>
- *   <li>Once: <code>$mut = new MergeUserTool();</code></li>
- *   <li>N times: <code>$mut->merge($from, $to);</code> Passing two objects with at least
+ *
+ * 1. Once: `$mut = new mergeusertool();`
+ * 2. N times: `$mut->merge($from, $to);` Passing two objects with at least
  *   two attributes ('id' and 'username') on each, this will merge the user $from into the
- *   user $to, so that the $from user will be empty of activity.</li>
- * </ol>
+ *   user $to, so that the $from user will be empty of activity.
  *
  * @author Jordi Pujol-Ahulló
  */
-class MergeUserTool
+class mergeusertool
 {
 
     /**
@@ -124,15 +129,15 @@ class MergeUserTool
     /**
      * Initializes
      * @global object $CFG
-     * @param tool_mergeusers_config $config local configuration.
-     * @param tool_mergeusers_logger $logger logger facility to save results of mergings.
+     * @param config $config local configuration.
+     * @param logger $logger logger facility to save results of mergings.
      */
-    public function __construct(tool_mergeusers_config $config = null, tool_mergeusers_logger $logger = null)
+    public function __construct(config $config = null, logger $logger = null)
     {
         global $CFG;
 
-        $this->logger = (is_null($logger)) ? new tool_mergeusers_logger() : $logger;
-        $config = (is_null($config)) ? tool_mergeusers_config::instance() : $config;
+        $this->logger = (is_null($logger)) ? new logger() : $logger;
+        $config = (is_null($config)) ? config::instance() : $config;
         $this->supportedDatabase = true;
 
         $this->checkTransactionSupport();
@@ -184,7 +189,7 @@ class MergeUserTool
         foreach ($config->tablemergers as $tableName => $class) {
             $tm = new $class();
             // ensure any provided class is a class of TableMerger
-            if (!$tm instanceof TableMerger) {
+            if (!$tm instanceof tablemerger) {
                 // aborts execution by showing an error.
                 if (CLI_SCRIPT) {
                     cli_error('Error: ' . __METHOD__ . ':: ' . get_string('notablemergerclass', 'tool_mergeusers',
@@ -213,63 +218,63 @@ class MergeUserTool
     }
 
     /**
-     * Merges two users into one. User-related data records from user id $fromid are merged into the
-     * user with id $toid.
-     * @global object $CFG
-     * @global moodle_database $DB
-     * @param int $toid The user inheriting the data
-     * @param int $fromid The user being replaced
-     * @return array An array(bool, array, int) having the following cases: if array(true, log, id)
-     * users' merging was successful and log contains all actions done; if array(false, errors, id)
-     * means users' merging was aborted and errors contain the list of errors.
-     * The last id is the log id of the merging action for later visual revision.
+     * Merges two users into one. User-related data records from user $user_remove are merged into the
+     * user $user_keep.
+     * @param \stdClass $user_remove
+     * @param \stdClass $user_remove
+     * @return mergeresult
      */
-    public function merge($toid, $fromid)
+    public function merge($user_keep, $user_remove)
     {
-        list($success, $log) = $this->_merge($toid, $fromid);
+        /**
+         * @var mergeresult
+         */
+        $mergeresult = $this->check_users_and_merge($user_keep->id, $user_remove->id);
 
         $eventpath = "\\tool_mergeusers\\event\\";
-        $eventpath .= ($success) ? "user_merged_success" : "user_merged_failure";
+        $eventpath .= ($mergeresult->success) ? "user_merged_success" : "user_merged_failure";
 
         $event = $eventpath::create(array(
             'context' => \context_system::instance(),
             'other' => array(
                 'usersinvolved' => array(
-                    'toid' => $toid,
-                    'fromid' => $fromid,
+                    'toid' => $user_keep->id,
+                    'fromid' => $user_remove->id,
                 ),
-                'log' => $log,
+                'log' => $mergeresult->log,
             ),
         ));
         $event->trigger();
-        $logid = $this->logger->log($toid, $fromid, $success, $log);
-        return array($success, $log, $logid);
+        $mergeresult->logid = $this->logger->log($user_keep, $user_remove, $mergeresult);
+        return $mergeresult;
     }
 
     /**
      * Real method that performs the merging action.
-     * @global object $CFG
-     * @global moodle_database $DB
-     * @param int $toid The user inheriting the data
-     * @param int $fromid The user being replaced
-     * @return array An array(bool, array) having the following cases: if array(true, log)
-     * users' merging was successful and log contains all actions done; if array(false, errors)
-     * means users' merging was aborted and errors contain the list of errors.
+     * @param int $user_keep_id The user inheriting the data
+     * @param int $user_remove_id The user being replaced
+     * @return mergeresult
      */
-    private function _merge($toid, $fromid)
+    private function check_users_and_merge($user_keep_id, $user_remove_id)
     {
         global $CFG, $DB;
 
         // initial checks.
         // database type is supported?
         if (!$this->supportedDatabase) {
-            return array(false, array(get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype)));
+            return mergeresult::from(
+                false,
+                [get_string('errordatabase', 'tool_mergeusers', $CFG->dbtype)]
+            );
         }
 
         // are they the same?
-        if ($fromid == $toid) {
+        if ($user_remove_id == $user_keep_id) {
             // yes. do nothing.
-            return array(false, array(get_string('errorsameuser', 'tool_mergeusers')));
+            return mergeresult::from(
+                false,
+                [get_string('errorsameuser', 'tool_mergeusers')]
+            );
         }
 
         // ok, now we have to work;-)
@@ -288,34 +293,10 @@ class MergeUserTool
         $transaction = $DB->start_delegated_transaction();
 
         try {
-            // processing each table name
-            $data = array(
-                'toid' => $toid,
-                'fromid' => $fromid,
-            );
-            foreach ($this->userFieldsPerTable as $tableName => $userFields) {
-                $data['tableName'] = $tableName;
-                $data['userFields'] = $userFields;
-                if (isset($this->tablesWithCompoundIndex[$tableName])) {
-                    $data['compoundIndex'] = $this->tablesWithCompoundIndex[$tableName];
-                } else {
-                    unset($data['compoundIndex']);
-                }
+            $this->merge_users($user_keep_id, $user_remove_id, $actionLog, $errorMessages);
 
-                $tableMerger = (isset($this->tableMergers[$tableName])) ?
-                        $this->tableMergers[$tableName] :
-                        $this->tableMergers['default'];
-
-                // process the given $tableName.
-                $tableMerger->merge($data, $actionLog, $errorMessages);
-            }
-
-            $this->updateGrades($toid, $fromid);
         } catch (Exception $e) {
-            $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
-                    html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
-                    'Trace:' . html_writer::empty_tag('br') .
-                    $e->getTraceAsString() . html_writer::empty_tag('br'));
+            $errorMessages[] = $this->build_failed_merged_message_from($e);
         }
 
         if ($this->debugdb) {
@@ -331,7 +312,7 @@ class MergeUserTool
             $transaction->allow_commit();
 
             // add skipped tables as first action in log
-            $skippedTables = array();
+            $skippedTables = [];
             if (!empty($this->tablesSkipped)) {
                 $skippedTables[] = get_string('tableskipped', 'tool_mergeusers', implode(", ", $this->tablesSkipped));
             }
@@ -340,7 +321,7 @@ class MergeUserTool
             $actionLog[] = get_string('finishtime', 'tool_mergeusers', userdate($finishTime));
             $actionLog[] = get_string('timetaken', 'tool_mergeusers', $finishTime - $startTime);
 
-            return array(true, array_merge($skippedTables, $actionLog));
+            return mergeresult::from(true, array_merge($skippedTables, $actionLog));
         } else {
             try {
                 //thrown controlled exception.
@@ -354,13 +335,14 @@ class MergeUserTool
         $errorMessages[] = get_string('timetaken', 'tool_mergeusers', $finishTime - $startTime);
 
         // concludes with an array of error messages otherwise.
-        return array(false, $errorMessages);
+        return mergeresult::from(false, $errorMessages);
     }
 
     // ****************** INTERNAL UTILITY METHODS ***********************************************
 
     /**
      * Initializes the list of database table names and user-related fields for each table.
+     * @throws \dml_exception if some database operation fails.
      * @global object $CFG
      * @global moodle_database $DB
      */
@@ -462,6 +444,7 @@ class MergeUserTool
      * true or false whether the current database supports transactions or not,
      * respectively.
      * @return bool true if database transactions are supported. false otherwise.
+     * @throws \Exception if some database operation goes wrong.
      */
     public function checkTransactionSupport()
     {
@@ -489,6 +472,7 @@ class MergeUserTool
      * @param string $userFields candidate user fields to check.
      * @return bool | array false if no matching field name;
      * string array with matching field names otherwise.
+     * @throws \dml_exception of there is some error on database.
      */
     private function getCurrentUserFieldNames($tableName, $userFields)
     {
@@ -507,6 +491,8 @@ class MergeUserTool
     /**
      * Update all of the target user's grades.
      * @param int $toid User id
+     * @param int $fromid
+     * @throws \Exception if there is some data inconsistency.
      */
     private function updateGrades($toid, $fromid) {
         global $DB, $CFG;
@@ -532,5 +518,52 @@ class MergeUserTool
 
             grade_update_mod_grades($activity, $toid);
         }
+    }
+
+    /**
+     * @param int $user_keep_id
+     * @param int $user_remove_id
+     * @param array $actionLog input/output array
+     * @param array $errorMessages input/output array
+     * @throws \Exception if some database operation fails
+     */
+    private function merge_users($user_keep_id, $user_remove_id, $actionLog, $errorMessages)
+    {
+        $data = array(
+            'toid' => $user_keep_id,
+            'fromid' => $user_remove_id,
+        );
+        // processing each table name
+        foreach ($this->userFieldsPerTable as $tableName => $userFields) {
+            $data['tableName'] = $tableName;
+            $data['userFields'] = $userFields;
+            if (isset($this->tablesWithCompoundIndex[$tableName])) {
+                $data['compoundIndex'] = $this->tablesWithCompoundIndex[$tableName];
+            } else {
+                unset($data['compoundIndex']);
+            }
+
+            $tableMerger = (isset($this->tableMergers[$tableName])) ?
+                $this->tableMergers[$tableName] :
+                $this->tableMergers['default'];
+
+            // process the given $tableName.
+            $tableMerger->merge($data, $actionLog, $errorMessages);
+        }
+
+        $this->updateGrades($user_keep_id, $user_remove_id);
+    }
+
+    /**
+     * @param $e
+     * @param $DB
+     * @return string
+     */
+    private function build_failed_merged_message_from($e, $DB)
+    {
+        return nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
+            html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
+            'Trace:' . html_writer::empty_tag('br') .
+            $e->getTraceAsString() . html_writer::empty_tag('br'));
     }
 }

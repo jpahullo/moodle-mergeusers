@@ -14,6 +14,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+namespace tool_mergeusers\table;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * TableMerger for the user_enrolments table.
@@ -23,7 +26,7 @@
  * @author     Jordi Pujol-Ahulló <jordi.pujol@urv.cat>,  SREd, Universitat Rovira i Virgili
  * @license    http://www.gnu.org/copyleft/gpl.html GNU GPL v3 or later
  */
-class UserEnrolmentsMerger extends GenericTableMerger
+class userenrolmentsmerger extends generictablemerger
 {
 
     /**

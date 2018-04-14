@@ -14,6 +14,9 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+namespace tool_mergeusers\table;
+
+defined('MOODLE_INTERNAL') || die();
 
 /**
  * Tool for merging users in a database table.
@@ -30,10 +33,10 @@
  *
  * The lifecycle will be:
  *
- * 1. MergeUserTool will call to TableMerger.getTablesToSkip(), to get the list
+ * 1. mergeusertool will call to TableMerger.getTablesToSkip(), to get the list
  *    of tables not being processed by others TableMergers. This step is done
- *    only once in the configuration phase of the MergeUserTool.
- * 2. MergeUserTool calls to the TableMerger.merge() to actually merge records of
+ *    only once in the configuration phase of the mergeusertool.
+ * 2. mergeusertool calls to the TableMerger.merge() to actually merge records of
  *    the given $tablename. This call will update when necessary the list of
  *    errors (on $errorMessages) and the list of actions performed (on
  *    $actionLog).
@@ -52,7 +55,7 @@
  *    table1_aux according to some specific rules.
  *
  */
-interface TableMerger
+interface tablemerger
 {
     const PRIMARY_KEY = 'id';
 

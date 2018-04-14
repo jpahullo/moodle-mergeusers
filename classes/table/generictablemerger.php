@@ -14,6 +14,7 @@
 //
 // You should have received a copy of the GNU General Public License
 // along with Moodle.  If not, see <http://www.gnu.org/licenses/>.
+namespace tool_mergeusers\table;
 
 /**
  * Generic implementation of the TableMerger.
@@ -30,7 +31,7 @@ defined('MOODLE_INTERNAL') || die();
  *
  * @author jordi
  */
-class GenericTableMerger implements TableMerger
+class generictablemerger implements tablemerger
 {
     /**
      * Sets that in case of conflict, data related to new user is kept.

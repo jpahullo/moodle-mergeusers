@@ -28,18 +28,12 @@ defined('MOODLE_INTERNAL') || die();
 global $CFG;
 require_once($CFG->dirroot . '/mod/assign/tests/base_test.php');
 
+use tool_mergeusers\mergeusertool;
+
 /**
  * Class assign_test
  */
 class tool_mergeusers_assign_testcase extends mod_assign_base_testcase {
-    /**
-     *
-     */
-    public function setUp() {
-        global $CFG;
-        require_once("$CFG->dirroot/admin/tool/mergeusers/lib/mergeusertool.php");
-        parent::setUp();
-    }
 
     /**
      * Test merging two users where one has submitted an assignment and the other
@@ -67,8 +61,8 @@ class tool_mergeusers_assign_testcase extends mod_assign_base_testcase {
         $this->assertEquals('-', $this->get_user_assign_grade($this->students[0], $assign, $this->course));
 
         // Merge student 1 into student 0.
-        $mut = new MergeUserTool();
-        $mut->merge($this->students[0]->id, $this->students[1]->id);
+        $mut = new mergeusertool();
+        $mut->merge($this->students[0], $this->students[1]);
 
         // Student 0 should now have a grade of 75.00.
         $this->assertEquals(true, $assign->testable_is_graded($this->students[0]->id));
