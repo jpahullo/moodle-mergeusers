@@ -43,7 +43,7 @@ class mergeresult
 
     public static function from($success, $log, $logid = null)
     {
-        return new static($success, $log, logid);
+        return new static($success, $log, $logid);
     }
 
 }

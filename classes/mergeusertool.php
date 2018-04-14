@@ -34,6 +34,8 @@ namespace tool_mergeusers;
 
 defined('MOODLE_INTERNAL') || die();
 
+use user_merged_success;
+use tool_mergeusers\event\user_merged_failure;
 
 require_once dirname(dirname(dirname(dirname(__DIR__)))) . '/config.php';
 
@@ -231,10 +233,14 @@ class mergeusertool
          */
         $mergeresult = $this->check_users_and_merge($user_keep->id, $user_remove->id);
 
-        $eventpath = "\\tool_mergeusers\\event\\";
-        $eventpath .= ($mergeresult->success) ? "user_merged_success" : "user_merged_failure";
+        $eventname = 'tool_mergeusers\\event\\';
+        if ($mergeresult->success) {
+            $eventname .= "user_merged_success";
+        } else {
+            $eventname .= "user_merged_failure";
+        }
 
-        $event = $eventpath::create(array(
+        $event = $eventname::create(array(
             'context' => \context_system::instance(),
             'other' => array(
                 'usersinvolved' => array(
