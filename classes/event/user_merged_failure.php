@@ -25,6 +25,7 @@
  */
 
 namespace tool_mergeusers\event;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**

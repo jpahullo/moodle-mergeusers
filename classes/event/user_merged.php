@@ -27,6 +27,7 @@
  */
 
 namespace tool_mergeusers\event;
+
 defined('MOODLE_INTERNAL') || die();
 
 /**
@@ -67,5 +68,20 @@ abstract class user_merged extends \core\event\base {
         $data->log = $this->other['log'];
         $data->timemodified = $this->timecreated;
         return $data;
+    }
+
+    public static function trigger_from(int $userkeepid, int $userremoveid, array $log)
+    {
+        $event = self::create(array(
+            'context' => \context_system::instance(),
+            'other' => array(
+                'usersinvolved' => array(
+                    'toid' => $userkeepid,
+                    'fromid' => $userremoveid,
+                ),
+                'log' => $log,
+            ),
+        ));
+        $event->trigger();
     }
 }

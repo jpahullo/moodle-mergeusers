@@ -251,6 +251,8 @@ class mergeusertool
             ),
         ));
         $event->trigger();
+        // TODO: add detail of user to log to keep track, in case it is deleted some time after
+        // TODO: we need also to add an upgrade script to update logs properly
         $mergeresult->logid = $this->logger->log($user_keep, $user_remove, $mergeresult);
         return $mergeresult;
     }
