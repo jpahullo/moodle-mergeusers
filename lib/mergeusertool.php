@@ -269,6 +269,7 @@ class MergeUserTool
             }
 
             $this->updateGrades($toid, $fromid);
+            $this->completion_mark_in_progress($toid);
         } catch (Exception $e) {
             $errorMessages[] = nl2br("Exception thrown when merging: '" . $e->getMessage() . '".' .
                     html_writer::empty_tag('br') . $DB->get_last_error() . html_writer::empty_tag('br') .
@@ -469,6 +470,15 @@ class MergeUserTool
             $activity->cmidnumber = $cm->idnumber;
 
             grade_update_mod_grades($activity, $toid);
+        }
+    }
+
+    private function completion_mark_in_progress(int $toid): void {
+        global $DB;
+        $courses = $DB->get_records('course_completions', ['userid' => $toid], "", "courseid");
+        foreach ($courses as $course) {
+            $completion = new completion_completion(['course' => $course->courseid, 'userid' => $toid]);
+            $completion->mark_inprogress();
         }
     }
 }
